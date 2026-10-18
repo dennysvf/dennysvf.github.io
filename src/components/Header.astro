@@ -1,0 +1,60 @@
+---
+import { NAV, SITE } from '../consts';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a href="/" class="brand">{SITE.shortName}<span class="dot">.</span></a>
+    <nav aria-label="Principal">
+      {NAV.map((item) => (
+        <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>
+      ))}
+      <button id="theme-toggle" type="button" aria-label="Alternar tema claro/escuro">
+        <span aria-hidden="true">◐</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  btn?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+    root.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch {}
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 85%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { display: flex; align-items: center; justify-content: space-between; height: 3.75rem; }
+  .brand { font-family: var(--font-display); font-size: 1.6rem; text-decoration: none; }
+  .dot { color: var(--accent); }
+  nav { display: flex; align-items: center; gap: clamp(0.75rem, 3vw, 1.75rem); }
+  nav a { font-size: 0.9375rem; text-decoration: none; color: var(--muted); }
+  nav a:hover, nav a[aria-current='page'] { color: var(--text); }
+  nav a[aria-current='page'] { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.4em; }
+  button {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--text);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  button:hover { border-color: var(--accent); }
+</style>

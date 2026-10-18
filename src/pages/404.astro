@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Página não encontrada">
+  <section class="wrap page">
+    <p class="mono"><span class="accent">404</span> · nenhum agente gerou esta página</p>
+    <h1 class="display">Página não encontrada.</h1>
+    <a href="/">← voltar para o início</a>
+  </section>
+</Base>
+
+<style>
+  .page { padding-block: clamp(5rem, 15vw, 10rem); }
+  .accent { color: var(--accent); }
+  h1 { font-size: clamp(2.75rem, 8vw, 5rem); margin: 1rem 0 2rem; }
+</style>

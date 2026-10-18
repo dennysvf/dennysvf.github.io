@@ -1,0 +1,128 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { SITE } from '../consts';
+import { articleHref, formatDate, publishedArticles } from '../lib/content';
+
+const projects = (await getCollection('projetos', ({ data }) => data.featured)).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const articles = (await publishedArticles()).slice(0, 3);
+
+const steps = [
+  { name: 'PRD', text: 'Requisitos completos: personas, métricas e funcionalidades organizadas em ondas de dependência.' },
+  { name: 'Spec + contrato', text: 'Para cada funcionalidade, um plano técnico e uma lista de comportamentos que dá para testar.' },
+  { name: 'Implementação', text: 'Um agente de IA implementa em commits por etapa, dentro de guardrails de arquitetura.' },
+  { name: 'Avaliação', text: 'Um segundo agente testa cada item do contrato via HTTP, navegador e banco. Se falhar, corrige e repete.' },
+];
+---
+
+<Base>
+  <section class="hero wrap">
+    <p class="eyebrow">{SITE.role}</p>
+    <h1 class="display">
+      Eu não escrevo código.<br />
+      <em>Eu projeto o que a IA escreve.</em>
+    </h1>
+    <p class="lead">
+      Sou {SITE.name}. Construo software de verdade, com arquitetura, testes e deploy, usando agentes de IA para
+      100% da implementação. Meu trabalho é especificar, definir critérios de aceitação e revisar.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="/projetos">Ver projetos</a>
+      <a class="btn" href={SITE.github}>GitHub ↗</a>
+    </div>
+    <p class="mono terminal" aria-label="Linhas de código escritas manualmente: zero">
+      <span class="prompt">$</span> git log --author=humano --numstat | soma <span class="out">→ 0 linhas</span>
+    </p>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="display">Projetos</h2>
+        <a class="mono" href="/projetos">todos os projetos →</a>
+      </div>
+      <div class="grid">
+        {projects.map((project, i) => <ProjectCard project={project} index={i} />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="display">Como eu trabalho</h2>
+      </div>
+      <ol class="steps">
+        {steps.map((step, i) => (
+          <li>
+            <span class="mono step-num">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{step.name}</h3>
+            <p>{step.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="display">Artigos</h2>
+        <a class="mono" href="/artigos">todos os artigos →</a>
+      </div>
+      {articles.length === 0 ? (
+        <p class="empty">Os primeiros textos estão a caminho. Acompanhe pelo <a href="/rss.xml">RSS</a>.</p>
+      ) : (
+        <ul class="article-list">
+          {articles.map((a) => (
+            <li>
+              <a href={articleHref(a)}>
+                <span class="mono date">{formatDate(a.data.pubDate)}</span>
+                <span class="title">{a.data.title}{a.data.externalUrl && <span class="ext"> ↗</span>}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero { padding-block: clamp(4rem, 12vw, 9rem) clamp(3rem, 8vw, 5rem); }
+  h1 { font-size: clamp(3rem, 9vw, 6.5rem); margin: 1rem 0 1.5rem; }
+  h1 em { color: var(--accent); }
+  .lead { max-width: 38rem; font-size: 1.1875rem; color: var(--muted); margin: 0 0 2rem; }
+  .cta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 0.7rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--text); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { color: var(--accent-ink); filter: brightness(1.08); }
+  .terminal { margin-top: 3rem; color: var(--muted); overflow-wrap: anywhere; }
+  .prompt, .out { color: var(--accent); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 1.25rem; }
+
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1.25rem; }
+  .steps li { border-top: 2px solid var(--accent); padding-top: 1rem; }
+  .step-num { color: var(--muted); }
+  .steps h3 { margin: 0.5rem 0; font-size: 1.125rem; }
+  .steps p { margin: 0; color: var(--muted); font-size: 0.9875rem; }
+
+  .empty { color: var(--muted); }
+  .article-list { list-style: none; padding: 0; margin: 0; }
+  .article-list a { display: flex; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--line); text-decoration: none; align-items: baseline; flex-wrap: wrap; }
+  .date { color: var(--muted); min-width: 7rem; }
+  .title { font-size: 1.25rem; }
+  .ext { color: var(--accent); }
+</style>

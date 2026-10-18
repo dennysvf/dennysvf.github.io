@@ -1,0 +1,48 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { formatDate, publishedArticles } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const articles = (await publishedArticles()).filter((a) => !a.data.externalUrl);
+  return articles.map((article) => ({ params: { slug: article.id }, props: { article } }));
+}
+
+interface Props {
+  article: CollectionEntry<'artigos'>;
+}
+
+const { article } = Astro.props;
+const { title, description, pubDate, updatedDate, tags } = article.data;
+const { Content } = await render(article);
+---
+
+<Base title={title} description={description}>
+  <article class="wrap page">
+    <a class="mono back" href="/artigos">← artigos</a>
+    <header>
+      <p class="mono meta">
+        <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+        {updatedDate && <> · atualizado em {formatDate(updatedDate)}</>}
+      </p>
+      <h1 class="display">{title}</h1>
+      <p class="description">{description}</p>
+      {tags.length > 0 && (
+        <ul class="tags">{tags.map((t) => <li class="tag">#{t}</li>)}</ul>
+      )}
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .page { padding-block: clamp(2rem, 6vw, 4rem); }
+  .back { color: var(--muted); text-decoration: none; }
+  header { max-width: var(--prose); padding-block: 2rem 2.5rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--line); }
+  .meta { color: var(--muted); margin: 0; }
+  h1 { font-size: clamp(2.5rem, 7vw, 4rem); margin: 0.75rem 0 1rem; }
+  .description { font-size: 1.1875rem; color: var(--muted); margin: 0 0 1.25rem; }
+  .tags { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+</style>

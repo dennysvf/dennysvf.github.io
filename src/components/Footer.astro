@@ -1,0 +1,26 @@
+---
+import { SITE } from '../consts';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap row">
+    <p class="mono">© {year} {SITE.name}</p>
+    <ul>
+      <li><a href={SITE.github} rel="me">GitHub</a></li>
+      {SITE.linkedin && <li><a href={SITE.linkedin} rel="me">LinkedIn</a></li>}
+      <li><a href={`mailto:${SITE.email}`}>E-mail</a></li>
+      <li><a href="/rss.xml">RSS</a></li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .site-footer { border-top: 1px solid var(--line); padding-block: 2rem; margin-top: 4rem; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  p { margin: 0; color: var(--muted); }
+  ul { list-style: none; display: flex; gap: 1.25rem; margin: 0; padding: 0; font-size: 0.9375rem; }
+  a { color: var(--muted); text-decoration: none; }
+  a:hover { color: var(--accent); }
+</style>
