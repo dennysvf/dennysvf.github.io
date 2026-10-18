@@ -1,0 +1,77 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, useTranslations, type Locale } from '../i18n/ui';
+import { localizeArticle } from '../lib/content';
+
+interface Props {
+  articles: CollectionEntry<'artigos'>[];
+  locale: Locale;
+  // "compact" mostra só data e título (usado na home).
+  variant?: 'full' | 'compact';
+}
+
+const { articles, locale, variant = 'full' } = Astro.props;
+const t = useTranslations(locale);
+const items = articles.map((a) => ({ entry: a, view: localizeArticle(a, locale) }));
+---
+
+{items.length === 0 ? (
+  <p class="empty">{t.emptyArticles} <a href="/rss.xml">RSS</a>.</p>
+) : (
+  <ul class:list={['list', variant]}>
+    {items.map(({ entry, view }) => (
+      <li>
+        <a href={view.href} class="main">
+          <span class="mono date">{formatDate(entry.data.pubDate, locale)}</span>
+          <div>
+            <h2>
+              {view.title}
+              {variant === 'compact' && view.external && <span class="ext"> ↗</span>}
+              {entry.data.draft && <span class="tag draft">{t.articles.draft}</span>}
+            </h2>
+            {variant === 'full' && <p>{view.description}</p>}
+            {variant === 'full' && (
+              <p class="mono where">
+                {view.external ? 'LinkedIn ↗' : t.articles.readHere}
+                {view.hrefLocale !== locale && <span class="lang-note">{t.articles.inLanguage[view.hrefLocale]}</span>}
+                {entry.data.tags.map((tag) => <span>#{tag}</span>)}
+              </p>
+            )}
+          </div>
+        </a>
+        {variant === 'full' && view.alternate && (
+          <a class="mono alt" href={view.alternate.href} hreflang={view.alternate.locale}>
+            {t.articles.otherVersion[view.alternate.locale]}
+          </a>
+        )}
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .empty { color: var(--muted); }
+  .list { list-style: none; padding: 0; margin: 0; }
+  .list li { border-bottom: 1px solid var(--line); }
+  .main { display: grid; grid-template-columns: 8rem 1fr; gap: 1.5rem; padding: 1.5rem 0; text-decoration: none; }
+  .main:hover h2 { color: var(--accent); }
+  .date { color: var(--muted); padding-top: 0.35rem; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.75rem; line-height: 1.15; margin: 0 0 0.35rem; }
+  .main p { margin: 0; color: var(--muted); }
+  .draft { margin-left: 0.75rem; vertical-align: middle; }
+  .ext { color: var(--accent); }
+  .where { margin-top: 0.6rem !important; color: var(--accent) !important; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .where span { color: var(--muted); }
+  .where .lang-note { color: var(--text); }
+  .alt { display: block; padding: 0 0 1.25rem 9.5rem; margin-top: -0.75rem; color: var(--muted); text-decoration: none; }
+  .alt:hover { color: var(--accent); }
+
+  .compact .main { padding: 1rem 0; gap: 1.5rem; align-items: baseline; }
+  .compact h2 { font-family: var(--font-body); font-size: 1.25rem; margin: 0; }
+  .compact .date { padding-top: 0; }
+
+  @media (max-width: 40rem) {
+    .main { grid-template-columns: 1fr; gap: 0.25rem; }
+    .alt { padding-left: 0; }
+  }
+</style>

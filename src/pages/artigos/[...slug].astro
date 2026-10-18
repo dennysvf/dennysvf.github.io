@@ -1,8 +1,10 @@
 ---
 import { render, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import { formatDate, publishedArticles } from '../../lib/content';
+import { alternatesFor, formatDate, localizedPath, useTranslations } from '../../i18n/ui';
+import { publishedArticles } from '../../lib/content';
 
+// Artigos locais (sem externalUrl) existem só em português.
 export async function getStaticPaths() {
   const articles = (await publishedArticles()).filter((a) => !a.data.externalUrl);
   return articles.map((article) => ({ params: { slug: article.id }, props: { article } }));
@@ -15,20 +17,23 @@ interface Props {
 const { article } = Astro.props;
 const { title, description, pubDate, updatedDate, tags } = article.data;
 const { Content } = await render(article);
+const t = useTranslations('pt');
+// O seletor de idioma leva às listas de artigos, já que o texto não tem tradução.
+const alternates = { ...alternatesFor('articles'), pt: localizedPath('pt', 'articles', article.id) };
 ---
 
-<Base title={title} description={description}>
+<Base locale="pt" title={title} description={description} alternates={alternates} equivalent={false}>
   <article class="wrap page">
-    <a class="mono back" href="/artigos">← artigos</a>
+    <a class="mono back" href={localizedPath('pt', 'articles')}>{t.articles.back}</a>
     <header>
       <p class="mono meta">
-        <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
-        {updatedDate && <> · atualizado em {formatDate(updatedDate)}</>}
+        <time datetime={pubDate.toISOString()}>{formatDate(pubDate, 'pt')}</time>
+        {updatedDate && <> · {t.articles.updated} {formatDate(updatedDate, 'pt')}</>}
       </p>
       <h1 class="display">{title}</h1>
       <p class="description">{description}</p>
       {tags.length > 0 && (
-        <ul class="tags">{tags.map((t) => <li class="tag">#{t}</li>)}</ul>
+        <ul class="tags">{tags.map((tag) => <li class="tag">#{tag}</li>)}</ul>
       )}
     </header>
     <div class="prose">

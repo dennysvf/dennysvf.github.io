@@ -1,21 +1,55 @@
 ---
-import { NAV, SITE } from '../consts';
+import { SITE } from '../consts';
+import { LOCALE_META, LOCALES, localizedPath, useTranslations, type Locale, type RouteKey } from '../i18n/ui';
 
-const path = Astro.url.pathname;
-const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+interface Props {
+  locale: Locale;
+  alternates: Record<Locale, string>;
+}
+
+const { locale, alternates } = Astro.props;
+const t = useTranslations(locale);
+const path = Astro.url.pathname.replace(/\/?$/, '/');
+
+const items: { route: RouteKey; label: string }[] = [
+  { route: 'projects', label: t.nav.projects },
+  { route: 'articles', label: t.nav.articles },
+  { route: 'about', label: t.nav.about },
+];
+const nav = items.map((item) => ({ ...item, href: localizedPath(locale, item.route) }));
 ---
 
 <header class="site-header">
   <div class="wrap bar">
-    <a href="/" class="brand">{SITE.shortName}<span class="dot">.</span></a>
-    <nav aria-label="Principal">
-      {NAV.map((item) => (
-        <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a>
+    <a href={localizedPath(locale, 'home')} class="brand">{SITE.shortName}<span class="dot">.</span></a>
+    <nav aria-label={t.nav.main}>
+      {nav.map((item) => (
+        <a href={item.href} aria-current={path.startsWith(item.href) ? 'page' : undefined}>{item.label}</a>
       ))}
-      <button id="theme-toggle" type="button" aria-label="Alternar tema claro/escuro">
+    </nav>
+    <div class="controls">
+      <details class="lang">
+        <summary aria-label={t.language}>{LOCALE_META[locale].short}</summary>
+        <ul>
+          {LOCALES.map((l) => (
+            <li>
+              <a
+                href={alternates[l]}
+                hreflang={LOCALE_META[l].htmlLang}
+                lang={LOCALE_META[l].htmlLang}
+                data-lang={l}
+                aria-current={l === locale ? 'true' : undefined}
+              >
+                {LOCALE_META[l].label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <button id="theme-toggle" type="button" aria-label={t.themeToggle}>
         <span aria-hidden="true">◐</span>
       </button>
-    </nav>
+    </div>
   </div>
 </header>
 
@@ -26,6 +60,19 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
     const next = root.dataset.theme === 'light' ? 'dark' : 'light';
     root.dataset.theme = next;
     try { localStorage.setItem('theme', next); } catch {}
+  });
+
+  // A escolha manual de idioma fica salva e passa a valer nas próximas visitas.
+  document.querySelectorAll<HTMLAnchorElement>('a[data-lang]').forEach((link) => {
+    link.addEventListener('click', () => {
+      try { localStorage.setItem('lang', link.dataset.lang ?? ''); } catch {}
+    });
+  });
+
+  // Fecha o menu de idioma ao clicar fora.
+  const menu = document.querySelector<HTMLDetailsElement>('details.lang');
+  document.addEventListener('click', (e) => {
+    if (menu?.open && !menu.contains(e.target as Node)) menu.open = false;
   });
 </script>
 
@@ -38,23 +85,61 @@ const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
-  .bar { display: flex; align-items: center; justify-content: space-between; height: 3.75rem; }
-  .brand { font-family: var(--font-display); font-size: 1.6rem; text-decoration: none; }
+  .bar { display: flex; align-items: center; height: 3.75rem; gap: 1rem; }
+  .brand { font-family: var(--font-display); font-size: 1.6rem; text-decoration: none; margin-right: auto; }
   .dot { color: var(--accent); }
-  nav { display: flex; align-items: center; gap: clamp(0.75rem, 3vw, 1.75rem); }
-  nav a { font-size: 0.9375rem; text-decoration: none; color: var(--muted); }
-  nav a:hover, nav a[aria-current='page'] { color: var(--text); }
-  nav a[aria-current='page'] { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.4em; }
-  button {
+  nav { display: flex; align-items: center; gap: 1.75rem; }
+  .controls { display: flex; align-items: center; gap: 0.6rem; margin-left: 0.75rem; }
+  nav > a { font-size: 0.9375rem; text-decoration: none; color: var(--muted); }
+  nav > a:hover, nav > a[aria-current='page'] { color: var(--text); }
+  nav > a[aria-current='page'] { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.4em; }
+
+  button, summary {
     background: none;
     border: 1px solid var(--line);
     color: var(--text);
-    width: 2rem;
     height: 2rem;
     border-radius: 999px;
     cursor: pointer;
-    font-size: 1rem;
     line-height: 1;
   }
-  button:hover { border-color: var(--accent); }
+  button { width: 2rem; font-size: 1rem; }
+  button:hover, summary:hover { border-color: var(--accent); }
+
+  .lang { position: relative; }
+  summary {
+    list-style: none;
+    display: grid;
+    place-items: center;
+    min-width: 2.5rem;
+    padding: 0 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+  summary::-webkit-details-marker { display: none; }
+  .lang ul {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    margin: 0;
+    padding: 0.35rem;
+    list-style: none;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    min-width: 9rem;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  }
+  .lang ul a { display: block; padding: 0.45rem 0.7rem; border-radius: 6px; text-decoration: none; font-size: 0.9375rem; }
+  .lang ul a:hover { background: var(--code-bg); color: var(--text); }
+  .lang ul a[aria-current='true'] { color: var(--accent); }
+
+  nav > a { white-space: nowrap; }
+
+  /* Celular: nome + controles na primeira linha, links na segunda. */
+  @media (max-width: 40rem) {
+    .bar { flex-wrap: wrap; height: auto; padding-block: 0.6rem 0; row-gap: 0.35rem; }
+    nav { order: 3; width: 100%; gap: 1.25rem; padding-block: 0.35rem 0.6rem; overflow-x: auto; }
+    .controls { margin-left: 0; }
+  }
 </style>

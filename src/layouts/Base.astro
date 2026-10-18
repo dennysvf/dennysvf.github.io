@@ -3,42 +3,50 @@ import '../styles/global.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { SITE } from '../consts';
+import { LOCALE_META, LOCALES, useTranslations, type Locale } from '../i18n/ui';
 
 interface Props {
+  locale: Locale;
   title?: string;
   description?: string;
+  // URL desta mesma página em cada idioma (alimenta o seletor, o hreflang e o redirecionamento).
+  alternates: Record<Locale, string>;
+  // false quando as alternativas não são a mesma página (ex.: artigo só em português).
+  equivalent?: boolean;
 }
 
-const { title, description = SITE.description } = Astro.props;
-const fullTitle = title ? `${title} · ${SITE.shortName}` : `${SITE.name} — ${SITE.role}`;
+const { locale, title, alternates, equivalent = true } = Astro.props;
+const t = useTranslations(locale);
+const description = Astro.props.description ?? t.siteDescription;
+const fullTitle = title ? `${title} · ${SITE.shortName}` : `${SITE.name} — ${t.role}`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang={SITE.locale}>
+<html lang={LOCALE_META[locale].htmlLang} data-locale={locale} data-alternates={JSON.stringify(alternates)}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{fullTitle}</title>
-    <meta name="description" content={description} />
-    <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate" type="application/rss+xml" title={`Artigos · ${SITE.name}`} href="/rss.xml" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
-      rel="stylesheet"
-    />
 
     <script is:inline>
+      // Idioma: a escolha salva do visitante vence. Sem escolha, quem chega na versão padrão (pt)
+      // é levado ao idioma do navegador. Robôs de busca não são redirecionados.
+      try {
+        const root = document.documentElement;
+        const current = root.dataset.locale;
+        const alternates = JSON.parse(root.dataset.alternates || '{}');
+        const supported = ['pt', 'en', 'es'];
+        const isBot = /bot|crawl|spider|slurp|lighthouse|headless/i.test(navigator.userAgent);
+        let target = localStorage.getItem('lang');
+        if (!target && current === 'pt' && !isBot) {
+          const prefs = (navigator.languages || [navigator.language]).map((l) => l.slice(0, 2).toLowerCase());
+          target = prefs.find((l) => supported.includes(l)) || 'en';
+        }
+        if (target && target !== current && alternates[target]) {
+          location.replace(alternates[target] + location.hash);
+        }
+      } catch {}
+
       // Aplica o tema salvo antes da pintura para não piscar.
       try {
         const saved = localStorage.getItem('theme');
@@ -46,12 +54,36 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         document.documentElement.dataset.theme = theme;
       } catch {}
     </script>
+
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {equivalent && LOCALES.map((l) => (
+      <link rel="alternate" hreflang={LOCALE_META[l].htmlLang} href={new URL(alternates[l], Astro.site)} />
+    ))}
+    {equivalent && <link rel="alternate" hreflang="x-default" href={new URL(alternates.pt, Astro.site)} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title={`${SITE.name}`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={LOCALE_META[locale].htmlLang.replace('-', '_')} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <Header />
+    <Header locale={locale} alternates={alternates} />
     <main>
       <slot />
     </main>
-    <Footer />
+    <Footer locale={locale} />
   </body>
 </html>

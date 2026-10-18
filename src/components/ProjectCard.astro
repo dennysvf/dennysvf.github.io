@@ -1,23 +1,27 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { localizedPath, useTranslations, type Locale } from '../i18n/ui';
+import { projectSlug } from '../lib/content';
 
 interface Props {
   project: CollectionEntry<'projetos'>;
   index: number;
+  locale: Locale;
 }
 
-const { project, index } = Astro.props;
+const { project, index, locale } = Astro.props;
+const t = useTranslations(locale);
 const { title, tagline, summary, stack, status, aiOnly, stats } = project.data;
 const number = String(index + 1).padStart(2, '0');
 ---
 
 <article class="card">
-  <a href={`/projetos/${project.id}`} class="cover-link" aria-label={`Ver projeto ${title}`}></a>
+  <a href={localizedPath(locale, 'projects', projectSlug(project))} class="cover-link" aria-label={`${t.projects.viewProject} ${title}`}></a>
   <div class="top">
     <span class="mono num">{number}</span>
     <div class="badges">
-      {aiOnly && <span class="ai-badge">100% IA</span>}
-      <span class="tag">{status}</span>
+      {aiOnly && <span class="ai-badge">{t.projects.aiBadge}</span>}
+      <span class="tag">{t.projects.status[status]}</span>
     </div>
   </div>
   <h3 class="display">{title}</h3>

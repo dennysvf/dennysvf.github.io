@@ -1,37 +1,37 @@
 ---
-import { getCollection, render, type CollectionEntry } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-
-export async function getStaticPaths() {
-  const projects = await getCollection('projetos');
-  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
-}
+import { render, type CollectionEntry } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { alternatesFor, LOCALE_META, localizedPath, useTranslations, type Locale } from '../i18n/ui';
+import { projectSlug } from '../lib/content';
 
 interface Props {
   project: CollectionEntry<'projetos'>;
+  locale: Locale;
 }
 
-const { project } = Astro.props;
+const { project, locale } = Astro.props;
+const t = useTranslations(locale);
+const slug = projectSlug(project);
 const { title, tagline, summary, repo, demo, stack, status, aiOnly, stats, startedAt } = project.data;
 const { Content } = await render(project);
-const started = startedAt.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const started = startedAt.toLocaleDateString(LOCALE_META[locale].htmlLang, { month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 
-<Base title={title} description={summary}>
+<Base locale={locale} title={title} description={summary} alternates={alternatesFor('projects', slug)}>
   <article class="wrap page">
-    <a class="mono back" href="/projetos">← projetos</a>
+    <a class="mono back" href={localizedPath(locale, 'projects')}>{t.projects.back}</a>
     <header>
       <div class="badges">
-        {aiOnly && <span class="ai-badge">100% IA · 0 linhas manuais</span>}
-        <span class="tag">{status}</span>
-        <span class="tag">desde {started}</span>
+        {aiOnly && <span class="ai-badge">{t.projects.aiBadgeLong}</span>}
+        <span class="tag">{t.projects.status[status]}</span>
+        <span class="tag">{t.projects.since} {started}</span>
       </div>
       <h1 class="display">{title}</h1>
       <p class="tagline">{tagline}</p>
       <p class="summary">{summary}</p>
       <div class="links">
-        <a class="btn primary" href={repo}>Repositório ↗</a>
-        {demo && <a class="btn" href={demo}>Demo ↗</a>}
+        <a class="btn primary" href={repo}>{t.projects.repo}</a>
+        {demo && <a class="btn" href={demo}>{t.projects.demo}</a>}
       </div>
     </header>
 
@@ -50,7 +50,7 @@ const started = startedAt.toLocaleDateString('pt-BR', { month: 'long', year: 'nu
             ))}
           </dl>
         )}
-        <h2 class="eyebrow">Stack</h2>
+        <h2 class="eyebrow">{t.projects.stack}</h2>
         <ul class="stack">
           {stack.map((tech) => <li class="tag">{tech}</li>)}
         </ul>

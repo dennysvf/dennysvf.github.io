@@ -1,0 +1,88 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../consts';
+import { alternatesFor, useTranslations, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const about = t.about;
+---
+
+<Base locale={locale} title={about.eyebrow} description={about.metaDescription(SITE.name)} alternates={alternatesFor('about')}>
+  <section class="wrap page">
+    <p class="eyebrow">{about.eyebrow}</p>
+    <h1 class="display">{SITE.name}</h1>
+    <p class="lead">{about.lead}</p>
+    <div class="cta">
+      <a class="btn primary" href={`mailto:${SITE.email}`}>{about.contact}</a>
+      <!-- TODO: coloque o PDF em public/curriculo.pdf e descomente:
+      <a class="btn" href="/curriculo.pdf" download>{about.downloadCv}</a> -->
+    </div>
+
+    <div class="cv">
+      <section>
+        <h2 class="eyebrow">{about.experience}</h2>
+        <ol class="timeline">
+          {about.jobs.map((job) => (
+            <li>
+              <span class="mono period">{job.period}</span>
+              <div>
+                <h3>{job.role} <span class="company">· {job.company}</span></h3>
+                <p>{job.text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section>
+        <h2 class="eyebrow">{about.skills}</h2>
+        <ul class="skills">
+          {about.skillList.map((s) => <li>{s}</li>)}
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="eyebrow">{about.languages}</h2>
+        <dl class="langs">
+          {about.languageList.map((l) => (
+            <div>
+              <dt>{l.name}</dt>
+              <dd class="mono">{l.level}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .page { padding-block: clamp(3rem, 8vw, 5rem); }
+  h1 { font-size: clamp(2.75rem, 8vw, 5rem); margin: 0.75rem 0 1rem; }
+  .lead { max-width: 40rem; font-size: 1.1875rem; color: var(--muted); margin: 0 0 2rem; }
+  .cta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 0.7rem 1.25rem; border: 1px solid var(--line); border-radius: 999px; text-decoration: none; font-weight: 500; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.primary:hover { color: var(--accent-ink); }
+
+  .cv { margin-top: 4rem; display: grid; gap: 3rem; max-width: 48rem; }
+  .cv section { border-top: 1px solid var(--line); padding-top: 1.5rem; }
+  .timeline { list-style: none; padding: 0; margin: 1rem 0 0; }
+  .timeline li { display: grid; grid-template-columns: 8rem 1fr; gap: 1.5rem; padding-block: 0.75rem; }
+  .period { color: var(--muted); padding-top: 0.2rem; }
+  h3 { margin: 0 0 0.25rem; font-size: 1.125rem; }
+  .company { color: var(--muted); font-weight: 400; }
+  .timeline p { margin: 0; color: var(--muted); }
+  .skills { margin: 1rem 0 0; padding-left: 1.1rem; }
+  .skills li { margin-bottom: 0.35rem; }
+  .skills li::marker { color: var(--accent); }
+  .langs { margin: 1rem 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1rem; }
+  .langs dt { font-weight: 500; }
+  .langs dd { margin: 0; color: var(--muted); }
+  @media (max-width: 40rem) { .timeline li { grid-template-columns: 1fr; gap: 0.25rem; } }
+</style>

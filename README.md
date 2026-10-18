@@ -15,12 +15,19 @@ npm run build    # gera dist/
 | O quê | Onde |
 | --- | --- |
 | Nome, e-mail, links | `src/consts.ts` |
-| Projetos | `src/content/projetos/*.md` (um arquivo por projeto) |
-| Artigos | `src/content/artigos/*.md`, com `externalUrl` para posts do LinkedIn ou texto no corpo para posts locais |
-| Currículo | `src/pages/sobre.astro` (+ `public/curriculo.pdf`) |
+| Textos da interface e currículo (pt/en/es) | `src/i18n/ui.ts` |
+| Projetos | `src/content/projetos/{pt,en,es}/*.md` (o mesmo nome de arquivo em cada idioma) |
+| Artigos | `src/content/artigos/*.md`, com `externalUrl` para posts do LinkedIn e `translations` para título/resumo em en/es |
+| PDF do currículo | `public/curriculo.pdf` (e descomente o botão em `src/views/AboutView.astro`) |
 | Cores e fontes | `src/styles/global.css` |
 
 Artigos com `draft: true` não entram no build de produção.
+
+## Idiomas
+
+- Português na raiz (`/`), inglês em `/en/` e espanhol em `/es/`, com URLs traduzidas.
+- Na primeira visita, quem chega na versão em português é levado ao idioma do navegador (sem correspondência → inglês). Robôs de busca não são redirecionados.
+- A escolha feita no seletor do topo fica salva no navegador e passa a valer em todas as visitas.
 
 ## Deploy
 
